@@ -6,53 +6,165 @@
   <link rel="stylesheet" href="style.css">
   <style>
     .main-content {
-      margin-left: 650px;
+      margin-left: 380px;
       padding: 40px;
     }
+    form label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    form input, form select, form button {
+      display: block;
+      margin-bottom: 15px;
+      padding: 8px;
+      width: 300px;
+    }
   </style>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <button class="but"><a href="home.html">Home</a></button>
+    <button class="but"><a href="invest.html">Invest</a></button>
+    <div class="dropdown">
+      <button class="dropbtn">Statistics</button>
+      <div class="dropdown-content">
+        <a href="piechart.html">Pie Chart</a>
+        <a href="graph.html">Graph</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <h2>Add Stock Investment</h2>
+    <form>
+      <label for="company">Select Company</label>
+      <select id="company" name="company">
+        <option>--select--</option>
+        <option value="RELIANCE.BSE">Reliance Industries</option>
+        <option value="TCS.BSE">Tata Consultancy Services (TCS)</option>
+        <option value="INFY.BSE">Infosys</option>
+        <option value="HDFCBANK.BSE">HDFC Bank</option>
+        <option value="ICICIBANK.BSE">ICICI Bank</option>
+        <option value="LT.BSE">Larsen & Toubro</option>
+        <option value="SBIN.BSE">State Bank of India (SBI)</option>
+        <option value="BHARTIARTL.BSE">Bharti Airtel</option>
+        <option value="ASIANPAINT.BSE">Asian Paints</option>
+        <option value="ITC.BSE">ITC Ltd</option>
+        <option value="MARUTI.BSE">Maruti Suzuki</option>
+        <option value="HINDUNILVR.BSE">Hindustan Unilever</option>
+        <option value="AXISBANK.BSE">Axis Bank</option>
+        <option value="BAJFINANCE.BSE">Bajaj Finance</option>
+        <option value="WIPRO.BSE">Wipro</option>
+        <option value="TECHM.BSE">Tech Mahindra</option>
+        <option value="ONGC.BSE">ONGC</option>
+        <option value="COALINDIA.BSE">Coal India</option>
+        <option value="NTPC.BSE">NTPC</option>
+        <option value="SUNPHARMA.BSE">Sun Pharma</option>
+      </select>
+
+      <label for="type">Type</label>
+      <input type="text" id="type" name="type" value="Stocks" readonly>
+
+      <label for="quantity">Quantity (No. of Shares)</label>
+      <input type="number" id="quantity" name="quantity" required>
+
+      <label for="purchase">Purchase Price (auto-calculated)</label>
+      <input type="number" id="purchase" name="purchase_price" readonly>
+
+      <label for="current">Current Price (₹)</label>
+      <input type="number" id="current" name="current_price" readonly>
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+  <div class="main-content">
+    <h2>📈 Past Stock Investments</h2>
+    <table id="stocksTable" border="1" cellpadding="10" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Quantity</th>
+          <th>Purchase Price</th>
+          <th>Purchase Price (Unit)</th>
+          <th>Live Current Price (Unit)</th> <!-- 🔁 UPDATED -->
+          <th>Gain/Loss</th> <!-- 🔁 UPDATED -->
+        </tr>
+      </thead>
+      <tbody>
+        <!-- JS fills this -->
+      </tbody>
+    </table>
+  </div>
+
   <script>
     let currentStockPrice = 0;
 
     document.addEventListener("DOMContentLoaded", () => {
-      // Replace "TCS.BSE" with desired stock symbol (e.g., "RELIANCE.BSE")
-      fetch("https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=TCS.BSE&apikey=H3ZK5ZX5CHBS7KHS")
-        .then(res => res.json())
-        .then(data => {
-          const price = parseFloat(data["Global Quote"]["05. price"]);
-          if (!isNaN(price)) {
-            currentStockPrice = price.toFixed(2);
-            document.getElementById("current").value = currentStockPrice;
-            updatePurchasePrice();
-          } else {
-            document.getElementById("current").value = "Unavailable";
-          }
-        })
-        .catch(err => {
-          console.error("API Error:", err);
-          document.getElementById("current").value = "Error fetching";
-        });
+      const companySelect = document.getElementById("company");
+      const quantityInput = document.getElementById("quantity");
+      const currentInput = document.getElementById("current");
+      const purchaseInput = document.getElementById("purchase");
+      const form = document.querySelector("form");
 
-      document.getElementById("quantity").addEventListener("input", updatePurchasePrice);
+      companySelect.addEventListener("change", () => {
+        const symbol = companySelect.value;
+        if (!symbol) {
+          currentInput.value = "";
+          return;
+        }
+
+        currentInput.value = "Loading...";
+        fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=H3ZK5ZX5CHBS7KHS`)
+          .then(res => res.json())
+          .then(data => {
+            const price = parseFloat(data["Global Quote"]["05. price"]);
+            if (!isNaN(price)) {
+              currentStockPrice = price.toFixed(2);
+              currentInput.value = currentStockPrice;
+              updatePurchasePrice();
+            } else {
+              currentInput.value = "Unavailable";
+              currentStockPrice = 0;
+            }
+          })
+          .catch(err => {
+            console.error("API Error:", err);
+            currentInput.value = "Error fetching";
+          });
+      });
+
+      quantityInput.addEventListener("input", updatePurchasePrice);
 
       function updatePurchasePrice() {
-        const quantity = parseFloat(document.getElementById("quantity").value);
+        const quantity = parseFloat(quantityInput.value);
         if (!isNaN(quantity) && currentStockPrice) {
-          const purchase = (quantity * currentStockPrice).toFixed(2);
-          document.getElementById("purchase").value = purchase;
+          const total = (quantity * currentStockPrice).toFixed(2);
+          purchaseInput.value = total;
         } else {
-          document.getElementById("purchase").value = "";
+          purchaseInput.value = "";
         }
       }
 
-      const form = document.querySelector("form");
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const quantity = parseFloat(document.getElementById("quantity").value);
-        const purchase_price = parseFloat(document.getElementById("purchase").value);
-        const current_price = parseFloat(document.getElementById("current").value);
+        const quantity = parseFloat(quantityInput.value);
+        const purchase_price = parseFloat(purchaseInput.value);
+        const current_price = parseFloat(currentInput.value);
+        const company = companySelect.options[companySelect.selectedIndex].text;
+
+        if (!quantity || !purchase_price || !current_price || !companySelect.value) {
+          alert("Please fill all required fields correctly.");
+          return;
+        }
 
         const investment = {
+          company,
           quantity,
           purchase_price,
           current_price
@@ -71,7 +183,8 @@
           if (res.ok) {
             alert("Stock investment added successfully!");
             form.reset();
-            document.getElementById("current").value = currentStockPrice;
+            currentInput.value = "";
+            fetchStockInvestments(); // Refresh table
           } else {
             alert("Error: " + data.message);
           }
@@ -81,45 +194,75 @@
         }
       });
     });
+
+    // 🔁 Symbol Map for fetching live prices
+    const symbolMap = {
+      "Reliance Industries": "RELIANCE.BSE",
+      "Tata Consultancy Services (TCS)": "TCS.BSE",
+      "Infosys": "INFY.BSE",
+      "HDFC Bank": "HDFCBANK.BSE",
+      "ICICI Bank": "ICICIBANK.BSE",
+      "Larsen & Toubro": "LT.BSE",
+      "State Bank of India (SBI)": "SBIN.BSE",
+      "Bharti Airtel": "BHARTIARTL.BSE",
+      "Asian Paints": "ASIANPAINT.BSE",
+      "ITC Ltd": "ITC.BSE",
+      "Maruti Suzuki": "MARUTI.BSE",
+      "Hindustan Unilever": "HINDUNILVR.BSE",
+      "Axis Bank": "AXISBANK.BSE",
+      "Bajaj Finance": "BAJFINANCE.BSE",
+      "Wipro": "WIPRO.BSE",
+      "Tech Mahindra": "TECHM.BSE",
+      "ONGC": "ONGC.BSE",
+      "Coal India": "COALINDIA.BSE",
+      "NTPC": "NTPC.BSE",
+      "Sun Pharma": "SUNPHARMA.BSE"
+    };
+
+    // 🔁 Fetch and display investments with live prices
+    async function fetchStockInvestments() {
+      try {
+        const response = await fetch('http://localhost:5000/api/investments/get-stocks');
+        const data = await response.json();
+
+        const tableBody = document.querySelector('#stocksTable tbody');
+        tableBody.innerHTML = '';
+
+        for (const investment of data) {
+          const symbol = symbolMap[investment.company];
+          let livePrice = investment.current_price;
+
+          if (symbol) {
+            try {
+              const res = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=H3ZK5ZX5CHBS7KHS`);
+              const apiData = await res.json();
+              const apiPrice = parseFloat(apiData["Global Quote"]["05. price"]);
+              if (!isNaN(apiPrice)) livePrice = apiPrice.toFixed(2);
+            } catch (error) {
+              console.error(`Live price error for ${symbol}:`, error);
+            }
+          }
+
+          const gainLoss = (livePrice*investment.quantity-investment.purchase_price).toFixed(2);
+          const row = `
+            <tr>
+              <td>${investment.company}</td>
+              <td>${investment.quantity}</td>
+              <td>₹${investment.purchase_price}</td>
+              <td>₹${(investment.purchase_price / investment.quantity).toFixed(2)}</td>
+              <td>₹${livePrice}</td>
+              <td style="color: ${gainLoss >= 0 ? 'green' : 'red'};">₹${gainLoss}</td>
+            </tr>
+          `;
+          tableBody.innerHTML += row;
+        }
+      } catch (error) {
+        console.error('Error fetching stock investments:', error);
+      }
+    }
+
+    // Load on page
+    window.onload = fetchStockInvestments;
   </script>
-</head>
-
-<body>
-
-  <!-- Sidebar -->
-  <div id="sidebar">
-    <button class="but"><a href="home.html">Home</a></button>
-    <button class="but"><a href="invest.html">Invest</a></button>
-
-    <!-- Dropdown for Statistics -->
-    <div class="dropdown">
-      <button class="dropbtn">Statistics</button>
-      <div class="dropdown-content">
-        <a href="piechart.html">Pie Chart</a>
-        <a href="graph.html">Graph</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main content -->
-  <div class="main-content">
-    <h2>Add Stock Investment</h2>
-    <form>
-      <label for="type">Type</label>
-      <input type="text" id="type" name="type" value="Stocks" readonly>
-
-      <label for="quantity">Quantity (No. of Shares)</label>
-      <input type="number" id="quantity" name="quantity" required>
-
-      <label for="purchase">Purchase Price (auto-calculated)</label>
-      <input type="number" id="purchase" name="purchase_price" readonly>
-
-      <label for="current">Current Price (₹)</label>
-      <input type="number" id="current" name="current_price" readonly>
-
-      <button type="submit">Submit</button>
-    </form>
-  </div>
-
 </body>
 </html>

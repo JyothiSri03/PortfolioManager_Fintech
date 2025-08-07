@@ -6,37 +6,151 @@
   <link rel="stylesheet" href="style.css">
   <style>
     .main-content {
-      margin-left: 650px;
+      margin-left: 380px;
       padding: 40px;
     }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
   </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <button class="but"><a href="home.html">Home</a></button>
+    <button class="but"><a href="invest.html">Invest</a></button>
+    <div class="dropdown">
+      <button class="dropbtn">Statistics</button>
+      <div class="dropdown-content">
+        <a href="piechart.html">Pie Chart</a>
+        <a href="graph.html">Graph</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <h2>Add Property Investment</h2>
+    <form id="propertyForm">
+      <label for="type">Type</label>
+      <input type="text" id="type" name="type" value="Property" readonly>
+
+      <label for="city">Select City</label>
+      <select id="city" name="city" required>
+        <option>--select--</option>
+        <option value="Mumbai">Mumbai</option>
+        <option value="Bangalore">Bangalore</option>
+        <option value="Hyderabad">Hyderabad</option>
+        <option value="Delhi">Delhi</option>
+        <option value="Chennai">Chennai</option>
+        <option value="Pune">Pune</option>
+        <option value="Kolkata">Kolkata</option>
+        <option value="Ahmedabad">Ahmedabad</option>
+        <option value="Jaipur">Jaipur</option>
+        <option value="Lucknow">Lucknow</option>
+        <option value="Surat">Surat</option>
+        <option value="Indore">Indore</option>
+        <option value="Noida">Noida</option>
+        <option value="Gurgaon">Gurgaon</option>
+        <option value="Nagpur">Nagpur</option>
+        <option value="Vizag">Vizag</option>
+      </select>
+      
+      <label for="area">Area (in sq. ft.)</label>
+      <input type="number" id="area" name="quantity" required>
+
+      <label for="purchase">Purchase Price (auto-calculated)</label>
+      <input type="number" id="purchase" name="purchase_price" readonly>
+
+      <label for="current">Current Price per Sq. Ft (₹)</label>
+      <input type="number" id="current" name="current_price" readonly>
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <h2>Past Property Investments</h2>
+    <table id="propertyTable">
+      <thead>
+        <tr>
+          <th>City</th>
+          <th>Area (sq. ft)</th>
+          <th>Purchase Price (₹)</th>
+          <th>Current Price/sq.ft (₹)</th>
+          <th>Gain/Loss (₹)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
   <script>
-    let currentPricePerSqFt = 6500; // Simulated daily property price
+    const pricePerSqFtByCity = {
+      "Mumbai": 15000,
+      "Bangalore": 12500,
+      "Hyderabad": 9500,
+      "Delhi": 13500,
+      "Chennai": 11000,
+      "Pune": 10000,
+      "Kolkata": 9000,
+      "Ahmedabad": 8500,
+      "Jaipur": 8000,
+      "Lucknow": 7800,
+      "Surat": 8200,
+      "Indore": 7700,
+      "Noida": 10500,
+      "Gurgaon": 12000,
+      "Nagpur": 7400,
+      "Vizag": 7600
+    };
 
     document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("current").value = currentPricePerSqFt;
-      updatePurchasePrice();
+      const citySelect = document.getElementById("city");
+      const currentInput = document.getElementById("current");
+      const areaInput = document.getElementById("area");
+      const purchaseInput = document.getElementById("purchase");
 
-      document.getElementById("area").addEventListener("input", updatePurchasePrice);
+      function updateCurrentPrice() {
+        const city = citySelect.value;
+        const price = pricePerSqFtByCity[city] || 0;
+        currentInput.value = price;
+        updatePurchasePrice();
+      }
 
       function updatePurchasePrice() {
-        const area = parseFloat(document.getElementById("area").value);
-        if (!isNaN(area)) {
-          const purchase = (area * currentPricePerSqFt).toFixed(2);
-          document.getElementById("purchase").value = purchase;
+        const area = parseFloat(areaInput.value);
+        const price = parseFloat(currentInput.value);
+        if (!isNaN(area) && !isNaN(price)) {
+          purchaseInput.value = (area * price).toFixed(2);
         } else {
-          document.getElementById("purchase").value = "";
+          purchaseInput.value = "";
         }
       }
 
-      document.querySelector("form").addEventListener("submit", async (e) => {
+      citySelect.addEventListener("change", updateCurrentPrice);
+      areaInput.addEventListener("input", updatePurchasePrice);
+      updateCurrentPrice();
+
+      // Submit form
+      document.getElementById("propertyForm").addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const quantity = parseFloat(document.getElementById("area").value); // area
-        const purchase_price = parseFloat(document.getElementById("purchase").value);
-        const current_price = parseFloat(document.getElementById("current").value);
+        const quantity = parseFloat(areaInput.value);
+        const purchase_price = parseFloat(purchaseInput.value);
+        const current_price = parseFloat(currentInput.value);
 
         const investment = {
+          type: "Property",
+          city: citySelect.value,
           quantity,
           purchase_price,
           current_price
@@ -55,7 +169,8 @@
           if (res.ok) {
             alert("Property investment added successfully!");
             e.target.reset();
-            document.getElementById("current").value = currentPricePerSqFt;
+            updateCurrentPrice();
+            fetchPropertyInvestments();
           } else {
             alert("Error: " + data.message);
           }
@@ -64,43 +179,36 @@
           alert("Failed to send data to the server.");
         }
       });
+
+      // Load and display past investments
+      async function fetchPropertyInvestments() {
+        try {
+          const res = await fetch("http://localhost:5000/api/investments/get-property");
+          const investments = await res.json();
+
+          const tbody = document.querySelector("#propertyTable tbody");
+          tbody.innerHTML = "";
+
+          investments.forEach(inv => {
+            const gainLoss = ((inv.current_price - (inv.purchase_price / inv.quantity)) * inv.quantity).toFixed(2);
+            const row = `
+              <tr>
+                <td>${inv.city}</td>
+                <td>${inv.quantity}</td>
+                <td>₹${inv.purchase_price}</td>
+                <td>₹${inv.current_price}</td>
+                <td style="color:${gainLoss >= 0 ? 'green' : 'red'};">₹${gainLoss}</td>
+              </tr>
+            `;
+            tbody.innerHTML += row;
+          });
+        } catch (err) {
+          console.error("Failed to fetch property data:", err);
+        }
+      }
+
+      fetchPropertyInvestments();
     });
   </script>
-</head>
-
-<body>
-
-  <!-- Sidebar -->
-  <div id="sidebar">
-    <button class="but"><a href="home.html">Home</a></button>
-    <button class="but"><a href="invest.html">Invest</a></button>
-    <div class="dropdown">
-      <button class="dropbtn">Statistics</button>
-      <div class="dropdown-content">
-        <a href="piechart.html">Pie Chart</a>
-        <a href="graph.html">Graph</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main content -->
-  <div class="main-content">
-    <h2>Add Property Investment</h2>
-    <form>
-      <label for="type">Type</label>
-      <input type="text" id="type" name="type" value="Property" readonly>
-
-      <label for="area">Area (in sq. ft.)</label>
-      <input type="number" id="area" name="quantity" required>
-
-      <label for="purchase">Purchase Price (auto-calculated)</label>
-      <input type="number" id="purchase" name="purchase_price" readonly>
-
-      <label for="current">Current Price per Sq. Ft (₹)</label>
-      <input type="number" id="current" name="current_price" readonly>
-
-      <button type="submit">Submit</button>
-    </form>
-  </div>
 </body>
 </html>
