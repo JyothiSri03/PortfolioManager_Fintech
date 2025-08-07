@@ -4,34 +4,195 @@
   <meta charset="UTF-8">
   <title>Tech Trove - Gold</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    .main-content {
-      margin-left: 380px;
-      padding: 40px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 30px;
-    }
-
-    th, td {
-      padding: 10px;
-      text-align: center;
-      border: 1px solid #ddd;
-    }
-
-    th {
-      background-color: #f2f2f2;
-    }
-  </style>
 </head>
+<!-- Script Section -->
+<script>
+  let currentPricePerGram = 0;
 
+  document.addEventListener("DOMContentLoaded", () => {
+    fetchGoldPrice();
+    fetchGoldInvestments();
+
+    const quantityInput = document.getElementById("quantity");
+    quantityInput.addEventListener("input", updatePurchasePrice);
+
+    const form = document.querySelector("form");
+    form.addEventListener("submit", handleFormSubmit);
+  });
+
+  function fetchGoldPrice() {
+    fetch("https://www.goldapi.io/api/XAU/INR", {
+      method: "GET",
+      headers: {
+        "x-access-token": "goldapi-3e0c119me097juu-io", // Replace with your valid API key
+        "Content-Type": "application/json"
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.price) {
+        currentPricePerGram = (data.price / 31.1035).toFixed(2);
+        document.getElementById("current").value = currentPricePerGram;
+        updatePurchasePrice();
+      } else {
+        document.getElementById("current").value = "Unavailable";
+      }
+    })
+    .catch(err => {
+      console.error("API Error:", err);
+      document.getElementById("current").value = "Error fetching";
+    });
+  }
+
+  function updatePurchasePrice() {
+    const quantity = parseFloat(document.getElementById("quantity").value);
+    if (!isNaN(quantity) && currentPricePerGram) {
+      const purchase = (quantity * currentPricePerGram).toFixed(2);
+      document.getElementById("purchase").value = purchase;
+    } else {
+      document.getElementById("purchase").value = "";
+    }
+  }
+
+  async function handleFormSubmit(e) {
+    e.preventDefault();
+
+    const quantity = parseFloat(document.getElementById("quantity").value);
+    const purchase_price = parseFloat(document.getElementById("purchase").value);
+    const current_price = parseFloat(document.getElementById("current").value);
+
+    const investment = {
+      quantity,
+      purchase_price,
+      current_price
+    };
+
+    try {
+      const res = await fetch("http://localhost:5000/api/investments/get-gold", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(investment)
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("Gold investment added successfully!");
+        e.target.reset();
+        document.getElementById("current").value = currentPricePerGram;
+        fetchGoldInvestments();
+      } else {
+        alert("Error: " + data.message);
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("Failed to send data to the server.");
+    }
+  }
+
+  function fetchGoldInvestments() {
+    fetch("http://localhost:5000/api/investments/get-gold")
+      .then(res => res.json())
+      .then(data => {
+        const tableBody = document.querySelector("#investmentTable tbody");
+        tableBody.innerHTML = "";
+
+        data.forEach(investment => {
+          const row = document.createElement("tr");
+          row.setAttribute("data-id", investment.id);
+
+          const gainLoss = (investment.quantity * currentPricePerGram - investment.purchase_price).toFixed(2);
+
+          const isSold = investment.sold === true || investment.sold === 1 || investment.sold === "1";
+
+          row.innerHTML = `
+            <td>${investment.quantity}</td>
+            <td>${investment.purchase_price}</td>
+            <td>${(investment.purchase_price / investment.quantity).toFixed(2)}</td>
+            <td>${currentPricePerGram}</td>
+            <td style="color: ${gainLoss >= 0 ? 'green' : 'red'};">${gainLoss}</td>
+            <td>
+              <button class="sell-btn" ${isSold ? "disabled style='background-color:green;color:white;'" : ""}>${isSold ? "Sold ✅" : "Sell"}</button>
+              <button class="withdraw-btn" ${isSold ? "disabled style='background-color:lightgray;color:#666;'" : "" }style=display:none>Withdraw</button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        attachGoldHandlers();
+      })
+      .catch(err => console.error("Fetch error:", err));
+  }
+
+  function attachGoldHandlers() {
+    document.querySelectorAll(".sell-btn").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const row = e.target.closest("tr");
+        const id = row.getAttribute("data-id");
+
+        const res = await fetch(`http://localhost:5000/api/investments/gold/sell/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sold: true })
+        });
+
+        if (res.ok) {
+          e.target.textContent = "Sold ✅";
+          e.target.disabled = true;
+          e.target.style.backgroundColor = "green";
+          e.target.style.color = "white";
+          e.target.style.border = "none";
+
+          const withdrawBtn = row.querySelector(".withdraw-btn");
+          withdrawBtn.disabled = true;
+          withdrawBtn.style.backgroundColor = "lightgray";
+          withdrawBtn.style.color = "#666";
+          withdrawBtn.style.border = "none";
+        }
+      });
+    });
+
+    document.querySelectorAll(".withdraw-btn").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const row = e.target.closest("tr");
+        const id = row.getAttribute("data-id");
+
+        const gainLossText = row.querySelector("td:nth-child(5)").textContent;
+        const gainLoss = parseFloat(gainLossText.replace("₹", "").replace(",", ""));
+
+        if (gainLoss < 0) {
+          const warning = confirm("⚠️ This investment is currently in loss.\nAre you sure you want to withdraw?");
+          if (!warning) return;
+        } else {
+          const confirmWithdraw = confirm("Are you sure you want to withdraw this investment?");
+          if (!confirmWithdraw) return;
+        }
+
+        try {
+          const res = await fetch(`http://localhost:5000/api/investments/gold/withdraw/${id}`, {
+            method: "DELETE"
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            alert("Gold investment withdrawn successfully.");
+            row.remove();
+          } else {
+            alert("Error: " + data.message);
+          }
+        } catch (err) {
+          console.error("Withdraw error:", err);
+          alert("Failed to withdraw investment.");
+        }
+      });
+    });
+  }
+</script>
 <body>
 
   <!-- Sidebar -->
   <div id="sidebar">
+    <h2 class="logo">TECH TROVE</h2>
     <button class="but"><a href="home.html">Home</a></button>
     <button class="but"><a href="invest.html">Invest</a></button>
 
@@ -48,7 +209,7 @@
   <!-- Main content -->
   <div class="main-content">
     <h2>Add Gold Investment</h2>
-
+    <div class="container">
     <form>
       <label for="type">Type</label>
       <input type="text" id="type" name="type" value="Gold" readonly>
@@ -64,8 +225,8 @@
 
       <button type="submit">Submit</button>
     </form>
-
-    <h2>Past Gold Investments</h2>
+    </div><br><br><br><br>
+    <h2>📊 Past Gold Investments</h2>
     <table id="investmentTable">
       <thead>
         <tr>
@@ -75,6 +236,7 @@
           <th>Purchase Price(Unit)</th>
           <th>Current Price</th>
           <th>Gain/Loss</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -82,116 +244,7 @@
       </tbody>
     </table>
   </div>
-
-  <!-- Script Section -->
-  <script>
-    let currentPricePerGram = 0;
-
-    document.addEventListener("DOMContentLoaded", () => {
-      fetchGoldPrice();
-      fetchGoldInvestments();
-
-      const quantityInput = document.getElementById("quantity");
-      quantityInput.addEventListener("input", updatePurchasePrice);
-
-      const form = document.querySelector("form");
-      form.addEventListener("submit", handleFormSubmit);
-    });
-
-    function fetchGoldPrice() {
-      fetch("https://www.goldapi.io/api/XAU/INR", {
-        method: "GET",
-        headers: {
-          "x-access-token": "goldapi-3e0c119me097juu-io",  // Replace with your valid API key
-          "Content-Type": "application/json"
-        }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.price) {
-          currentPricePerGram = (data.price / 31.1035).toFixed(2); // oz to grams
-          document.getElementById("current").value = currentPricePerGram;
-          updatePurchasePrice();
-        } else {
-          document.getElementById("current").value = "Unavailable";
-        }
-      })
-      .catch(err => {
-        console.error("API Error:", err);
-        document.getElementById("current").value = "Error fetching";
-      });
-    }
-
-    function updatePurchasePrice() {
-      const quantity = parseFloat(document.getElementById("quantity").value);
-      if (!isNaN(quantity) && currentPricePerGram) {
-        const purchase = (quantity * currentPricePerGram).toFixed(2);
-        document.getElementById("purchase").value = purchase;
-      } else {
-        document.getElementById("purchase").value = "";
-      }
-    }
-
-    async function handleFormSubmit(e) {
-      e.preventDefault();
-
-      const quantity = parseFloat(document.getElementById("quantity").value);
-      const purchase_price = parseFloat(document.getElementById("purchase").value);
-      const current_price = parseFloat(document.getElementById("current").value);
-
-      const investment = {
-        quantity,
-        purchase_price,
-        current_price
-      };
-
-      try {
-        const res = await fetch("http://localhost:5000/api/investments/gold", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(investment)
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          alert("Gold investment added successfully!");
-          e.target.reset();
-          document.getElementById("current").value = currentPricePerGram;
-          fetchGoldInvestments(); // Fetch and refresh table
-        } else {
-          alert("Error: " + data.message);
-        }
-      } catch (error) {
-        console.error("Submission error:", error);
-        alert("Failed to send data to the server.");
-      }
-    }
-
-    function fetchGoldInvestments() {
-      fetch("http://localhost:5000/api/investments/gold")
-        .then(res => res.json())
-        .then(data => {
-          const tableBody = document.querySelector("#investmentTable tbody");
-          tableBody.innerHTML = "";
-
-          data.forEach(investment => {
-            const row = document.createElement("tr");
-            const gainLoss = (investment.quantity*currentPricePerGram -investment.purchase_price ).toFixed(2);
-
-            row.innerHTML = `
-              
-              <td>${investment.quantity}</td>
-              <td>${investment.purchase_price}</td>
-              <td>${investment.current_price}</td>
-              <td>${currentPricePerGram}</td>
-              <td style="color: ${gainLoss >= 0 ? 'green' : 'red'};">${gainLoss}</td>`
-
-            tableBody.appendChild(row);
-          });
-        })
-        .catch(err => console.error("Fetch error:", err));
-    }
-  </script>
+  
 
 </body>
 </html>

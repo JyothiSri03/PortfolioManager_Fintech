@@ -19,3 +19,5 @@ app.use('/api/investments', mutualFundsRoutes);
 app.use('/api/investments', propertyRoutes);
 
 module.exports = app;
+
+

@@ -4,103 +4,9 @@
   <meta charset="UTF-8">
   <title>Tech Trove - Stock Investment</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    .main-content {
-      margin-left: 380px;
-      padding: 40px;
-    }
-    form label {
-      display: block;
-      margin: 10px 0 5px;
-    }
-    form input, form select, form button {
-      display: block;
-      margin-bottom: 15px;
-      padding: 8px;
-      width: 300px;
-    }
-  </style>
+ 
 </head>
-
 <body>
-
-  <!-- Sidebar -->
-  <div id="sidebar">
-    <button class="but"><a href="home.html">Home</a></button>
-    <button class="but"><a href="invest.html">Invest</a></button>
-    <div class="dropdown">
-      <button class="dropbtn">Statistics</button>
-      <div class="dropdown-content">
-        <a href="piechart.html">Pie Chart</a>
-        <a href="graph.html">Graph</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main content -->
-  <div class="main-content">
-    <h2>Add Stock Investment</h2>
-    <form>
-      <label for="company">Select Company</label>
-      <select id="company" name="company">
-        <option>--select--</option>
-        <option value="RELIANCE.BSE">Reliance Industries</option>
-        <option value="TCS.BSE">Tata Consultancy Services (TCS)</option>
-        <option value="INFY.BSE">Infosys</option>
-        <option value="HDFCBANK.BSE">HDFC Bank</option>
-        <option value="ICICIBANK.BSE">ICICI Bank</option>
-        <option value="LT.BSE">Larsen & Toubro</option>
-        <option value="SBIN.BSE">State Bank of India (SBI)</option>
-        <option value="BHARTIARTL.BSE">Bharti Airtel</option>
-        <option value="ASIANPAINT.BSE">Asian Paints</option>
-        <option value="ITC.BSE">ITC Ltd</option>
-        <option value="MARUTI.BSE">Maruti Suzuki</option>
-        <option value="HINDUNILVR.BSE">Hindustan Unilever</option>
-        <option value="AXISBANK.BSE">Axis Bank</option>
-        <option value="BAJFINANCE.BSE">Bajaj Finance</option>
-        <option value="WIPRO.BSE">Wipro</option>
-        <option value="TECHM.BSE">Tech Mahindra</option>
-        <option value="ONGC.BSE">ONGC</option>
-        <option value="COALINDIA.BSE">Coal India</option>
-        <option value="NTPC.BSE">NTPC</option>
-        <option value="SUNPHARMA.BSE">Sun Pharma</option>
-      </select>
-
-      <label for="type">Type</label>
-      <input type="text" id="type" name="type" value="Stocks" readonly>
-
-      <label for="quantity">Quantity (No. of Shares)</label>
-      <input type="number" id="quantity" name="quantity" required>
-
-      <label for="purchase">Purchase Price (auto-calculated)</label>
-      <input type="number" id="purchase" name="purchase_price" readonly>
-
-      <label for="current">Current Price (₹)</label>
-      <input type="number" id="current" name="current_price" readonly>
-
-      <button type="submit">Submit</button>
-    </form>
-  </div>
-
-  <div class="main-content">
-    <h2>📈 Past Stock Investments</h2>
-    <table id="stocksTable" border="1" cellpadding="10" cellspacing="0">
-      <thead>
-        <tr>
-          <th>Company</th>
-          <th>Quantity</th>
-          <th>Purchase Price</th>
-          <th>Purchase Price (Unit)</th>
-          <th>Live Current Price (Unit)</th> <!-- 🔁 UPDATED -->
-          <th>Gain/Loss</th> <!-- 🔁 UPDATED -->
-        </tr>
-      </thead>
-      <tbody>
-        <!-- JS fills this -->
-      </tbody>
-    </table>
-  </div>
-
   <script>
     let currentStockPrice = 0;
 
@@ -163,19 +69,12 @@
           return;
         }
 
-        const investment = {
-          company,
-          quantity,
-          purchase_price,
-          current_price
-        };
+        const investment = { company, quantity, purchase_price, current_price };
 
         try {
           const res = await fetch("http://localhost:5000/api/investments/stocks", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(investment)
           });
 
@@ -184,7 +83,7 @@
             alert("Stock investment added successfully!");
             form.reset();
             currentInput.value = "";
-            fetchStockInvestments(); // Refresh table
+            fetchStockInvestments();
           } else {
             alert("Error: " + data.message);
           }
@@ -195,7 +94,6 @@
       });
     });
 
-    // 🔁 Symbol Map for fetching live prices
     const symbolMap = {
       "Reliance Industries": "RELIANCE.BSE",
       "Tata Consultancy Services (TCS)": "TCS.BSE",
@@ -219,12 +117,10 @@
       "Sun Pharma": "SUNPHARMA.BSE"
     };
 
-    // 🔁 Fetch and display investments with live prices
     async function fetchStockInvestments() {
       try {
         const response = await fetch('http://localhost:5000/api/investments/get-stocks');
         const data = await response.json();
-
         const tableBody = document.querySelector('#stocksTable tbody');
         tableBody.innerHTML = '';
 
@@ -243,26 +139,145 @@
             }
           }
 
-          const gainLoss = (livePrice*investment.quantity-investment.purchase_price).toFixed(2);
-          const row = `
-            <tr>
-              <td>${investment.company}</td>
-              <td>${investment.quantity}</td>
-              <td>₹${investment.purchase_price}</td>
-              <td>₹${(investment.purchase_price / investment.quantity).toFixed(2)}</td>
-              <td>₹${livePrice}</td>
-              <td style="color: ${gainLoss >= 0 ? 'green' : 'red'};">₹${gainLoss}</td>
-            </tr>
+          const gainLoss = (livePrice * investment.quantity - investment.purchase_price).toFixed(2);
+          const gainColor = gainLoss >= 0 ? 'green' : 'red';
+
+          const isSold = investment.sold === true || investment.sold === 1 || investment.sold === "1";
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${investment.company}</td>
+            <td>${investment.quantity}</td>
+            <td>₹${investment.purchase_price}</td>
+            <td>₹${(investment.purchase_price / investment.quantity).toFixed(2)}</td>
+            <td>₹${livePrice}</td>
+            <td style="color: ${gainColor}">₹${gainLoss}</td>
+            <td>
+              <button class="sell-btn" ${isSold ? "disabled" : ""}>${isSold ? "Sold ✅" : "Sell"}</button>
+            <button class="withdraw-btn" ${isSold ? "disabled" : ""} style=display:none>Withdraw</button>
+            </td>
           `;
-          tableBody.innerHTML += row;
+          tableBody.appendChild(row);
         }
       } catch (error) {
         console.error('Error fetching stock investments:', error);
       }
     }
 
-    // Load on page
+    async function sellStock(id, button) {
+      try {
+        const res = await fetch(`http://localhost:5000/api/investments/sell-stock/${id}`, { method: 'PUT' });
+        if (res.ok) {
+          button.classList.add("sold");
+          button.disabled = true;
+
+          const withdrawBtn = button.nextElementSibling;
+          withdrawBtn.classList.add("disabled");
+          withdrawBtn.disabled = true;
+
+          alert("Stock marked as sold.");
+        } else {
+          alert("Error selling stock.");
+        }
+      } catch (err) {
+        console.error("Sell error:", err);
+      }
+    }
+
+    async function withdrawStock(id, button) {
+      try {
+        const res = await fetch(`http://localhost:5000/api/investments/withdraw-stock/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.loss) {
+          alert(data.message);
+        } else {
+          alert("Withdrawal allowed.");
+        }
+      } catch (err) {
+        console.error("Withdraw error:", err);
+      }
+    }
+
     window.onload = fetchStockInvestments;
   </script>
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <h2 class="logo">TECH TROVE</h2>
+    <button class="but"><a href="home.html">Home</a></button>
+    <button class="but"><a href="invest.html">Invest</a></button>
+    <div class="dropdown">
+      <button class="dropbtn">Statistics</button>
+      <div class="dropdown-content">
+        <a href="piechart.html">Pie Chart</a>
+        <a href="graph.html">Graph</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <h2>Add Stock Investment</h2>
+    <div class="container">
+    <form>
+      <label for="company">Select Company</label>
+      <select id="company" name="company">
+        <option>--select--</option>
+        <option value="RELIANCE.BSE">Reliance Industries</option>
+        <option value="TCS.BSE">Tata Consultancy Services (TCS)</option>
+        <option value="INFY.BSE">Infosys</option>
+        <option value="HDFCBANK.BSE">HDFC Bank</option>
+        <option value="ICICIBANK.BSE">ICICI Bank</option>
+        <option value="LT.BSE">Larsen & Toubro</option>
+        <option value="SBIN.BSE">State Bank of India (SBI)</option>
+        <option value="BHARTIARTL.BSE">Bharti Airtel</option>
+        <option value="ASIANPAINT.BSE">Asian Paints</option>
+        <option value="ITC.BSE">ITC Ltd</option>
+        <option value="MARUTI.BSE">Maruti Suzuki</option>
+        <option value="HINDUNILVR.BSE">Hindustan Unilever</option>
+        <option value="AXISBANK.BSE">Axis Bank</option>
+        <option value="BAJFINANCE.BSE">Bajaj Finance</option>
+        <option value="WIPRO.BSE">Wipro</option>
+        <option value="TECHM.BSE">Tech Mahindra</option>
+        <option value="ONGC.BSE">ONGC</option>
+        <option value="COALINDIA.BSE">Coal India</option>
+        <option value="NTPC.BSE">NTPC</option>
+        <option value="SUNPHARMA.BSE">Sun Pharma</option>
+      </select>
+
+      <label for="type">Type</label>
+      <input type="text" id="type" name="type" value="Stocks" readonly>
+
+      <label for="quantity">Quantity (No. of Shares)</label>
+      <input type="number" id="quantity" name="quantity" required>
+
+      <label for="purchase">Purchase Price (auto-calculated)</label>
+      <input type="number" id="purchase" name="purchase_price" readonly>
+
+      <label for="current">Current Price (₹)</label>
+      <input type="number" id="current" name="current_price" readonly>
+
+      <button type="submit">Submit</button>
+    </form>
+    </div>
+  </div>
+
+  <!-- Investment table -->
+  <div class="main-content">
+    <h2>📈 Past Stock Investments</h2>
+    <table id="stocksTable" border="1" cellpadding="10" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Quantity</th>
+          <th>Purchase Price</th>
+          <th>Unit Price</th>
+          <th>Live Price</th>
+          <th>Gain/Loss</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </body>
 </html>

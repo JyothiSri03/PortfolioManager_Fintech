@@ -25,4 +25,33 @@ router.get('/get-stocks', (req, res) => {
   });
 });
 
+router.put('/sell-stock/:id', (req, res) => {
+  const id = req.params.id;
+  const sql = `UPDATE stock_investments SET sold = 1 WHERE id = ?`;
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error("Error updating stock:", err);
+      return res.status(500).json({ message: "Server error" });
+    }
+    res.status(200).json({ message: "Stock sold successfully" });
+  });
+});
+
+router.delete('/withdraw-stock/:id', (req, res) => {
+  const { id } = req.params;
+
+  const sql = `DELETE FROM stock_investments WHERE id = ?`;
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('Error deleting investment:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+
+    res.status(200).json({ message: 'Investment withdrawn (deleted) successfully' });
+  });
+});
+
+
 module.exports = router;

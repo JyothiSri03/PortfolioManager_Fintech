@@ -4,12 +4,151 @@
   <meta charset="UTF-8">
   <title>Tech Trove - Mutual Funds</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    .main-content {
-      margin-left: 380px;
-      padding: 40px;
+  <script>
+    async function fetchMutualFundInvestments() {
+      try {
+        const response = await fetch('http://localhost:5000/api/investments/get-mutualfunds');
+        const data = await response.json();
+  
+        const tbody = document.querySelector('#mfTable tbody');
+        tbody.innerHTML = '';
+  
+        for (const investment of data) {
+          const fundCode = getFundCode(investment.fund_name);
+          let liveNav = investment.current_price;
+  
+          if (fundCode) {
+            try {
+              const res = await fetch(`https://api.mfapi.in/mf/${fundCode}`);
+              const mfData = await res.json();
+              if (mfData && mfData.data && mfData.data.length > 0) {
+                const latestNav = parseFloat(mfData.data[0].nav);
+                if (!isNaN(latestNav)) {
+                  liveNav = latestNav.toFixed(3);
+                }
+              }
+            } catch (err) {
+              console.error(`Error fetching NAV for ${investment.fund_name}:`, err);
+            }
+          }
+  
+          const purchaseNav = (investment.purchase_price / investment.quantity).toFixed(2);
+          const gainLoss = ((liveNav * investment.quantity) - investment.purchase_price).toFixed(2);
+  
+          const isSold = investment.sold === true || investment.sold === 1 || investment.sold === "1";
+  
+  
+          const row = document.createElement('tr');
+          row.setAttribute("data-id", investment.id);
+          row.innerHTML = `
+            <td>${investment.fund_name}</td>
+            <td>${investment.quantity}</td>
+            <td>₹${investment.purchase_price}</td>
+            <td>₹${purchaseNav}</td>
+            <td>₹${liveNav}</td>
+            <td style="color: ${gainLoss >= 0 ? 'green' : 'red'};">₹${gainLoss}</td>
+            <td>
+              <button class="sell-btn" ${isSold ? "disabled" : ""}>${isSold ? "Sold ✅" : "Sell"}</button>
+              <button class="withdraw-btn" ${isSold ? "disabled" : ""} style=display:none>Withdraw</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        }
+  
+        // Add button functionality
+        addSellWithdrawHandlers();
+  
+      } catch (error) {
+        console.error('Error fetching mutual fund investments:', error);
+      }
     }
-  </style>
+  
+    function getFundCode(fundName) {
+      const map = {
+        "SBI Bluechip Fund": "120503",
+        "HDFC Small Cap Fund": "118550",
+        "ICICI Prudential Value Discovery Fund": "119822"
+      };
+      return map[fundName] || null;
+    }
+  
+    function addSellWithdrawHandlers() {
+      document.querySelectorAll(".sell-btn").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          const row = e.target.closest("tr");
+          const id = row.getAttribute("data-id");
+  
+          const res = await fetch(`http://localhost:5000/api/investments/mutualfunds/sell/${id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ sold: true })
+          });
+  
+          if (res.ok) {
+            // ✅ Update Sell Button
+            e.target.textContent = "Sold ✅";
+            e.target.disabled = true;
+            e.target.classList.add("sold-btn"); // use CSS class
+          
+            // ✅ Update Withdraw Button
+            const withdrawBtn = row.querySelector(".withdraw-btn");
+            withdrawBtn.disabled = true;
+            withdrawBtn.classList.add("withdraw-disabled"); // use CSS class
+          }
+          
+          
+          
+        });
+      });
+  
+      document.querySelectorAll(".withdraw-btn").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          const row = e.target.closest("tr");
+          const id = row.getAttribute("data-id");
+      
+          if (!id) {
+            alert("Invalid investment ID.");
+            return;
+          }
+      
+          const gainLossText = row.querySelector("td:nth-child(6)").textContent;
+          const gainLoss = parseFloat(gainLossText.replace("₹", "").replace(",", ""));
+      
+          if (gainLoss < 0) {
+            const warning = confirm("⚠️ This investment is currently in loss.\nAre you sure you want to withdraw?");
+            if (!warning) return;
+          } else {
+            const confirmWithdraw = confirm("Are you sure you want to withdraw (delete) this investment?");
+            if (!confirmWithdraw) return;
+          }
+      
+          try {
+            const res = await fetch(`http://localhost:5000/api/investments/mutualfunds/withdraw/${id}`, {
+              method: "DELETE"
+            });
+      
+            const data = await res.json();
+      
+            if (res.ok) {
+              alert("Investment withdrawn successfully.");
+              row.remove();
+            } else {
+              alert("Error: " + data.message);
+            }
+          } catch (err) {
+            console.error("Withdraw error:", err);
+            alert("Failed to withdraw investment.");
+          }
+        });
+      });
+      
+    }
+  
+    window.onload = fetchMutualFundInvestments;
+  </script>
+  
   <script>
     let nav = 0;
   
@@ -118,6 +257,7 @@
 <body>
   <!-- Sidebar -->
   <div id="sidebar">
+    <h2 class="logo">TECH TROVE</h2>
     <button class="but"><a href="home.html">Home</a></button>
     <button class="but"><a href="invest.html">Invest</a></button>
 
@@ -129,11 +269,10 @@
       </div>
     </div>
   </div>
-
   <!-- Main Content -->
   <div class="main-content">
     <h2>Add Mutual Fund Investment</h2>
-
+    <div class="container">
     <form>
       <label for="fund">Select Mutual Fund</label>
       <select id="fund" name="fund" required>
@@ -158,6 +297,7 @@
       <button type="submit">Submit</button>
     </form>
   </div>
+  </div>
   <!-- Mutual Funds Table -->
 <div class="main-content">
   <h2>📊 Past Mutual Fund Investments</h2>
@@ -170,6 +310,7 @@
         <th>Purchase NAV (Unit)</th>
         <th>Live NAV (Unit)</th>
         <th>Gain/Loss</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -177,66 +318,5 @@
     </tbody>
   </table>
 </div>
-<script>
-  async function fetchMutualFundInvestments() {
-    try {
-      const response = await fetch('http://localhost:5000/api/investments/get-mutualfunds');
-      const data = await response.json();
-
-      const tbody = document.querySelector('#mfTable tbody');
-      tbody.innerHTML = '';
-
-      for (const investment of data) {
-        const fundCode = getFundCode(investment.fund_name);
-        let liveNav = investment.current_price;
-
-        if (fundCode) {
-          try {
-            const res = await fetch(`https://api.mfapi.in/mf/${fundCode}`);
-            const mfData = await res.json();
-            if (mfData && mfData.data && mfData.data.length > 0) {
-              const latestNav = parseFloat(mfData.data[0].nav);
-              if (!isNaN(latestNav)) {
-                liveNav = latestNav.toFixed(2);
-              }
-            }
-          } catch (err) {
-            console.error(`Error fetching NAV for ${investment.fund_name}:`, err);
-          }
-        }
-
-        const purchaseNav = (investment.purchase_price / investment.quantity).toFixed(2);
-        const gainLoss = ((liveNav * investment.quantity) - investment.purchase_price).toFixed(2);
-
-        const row = `
-          <tr>
-            <td>${investment.fund_name}</td>
-            <td>${investment.quantity}</td>
-            <td>₹${investment.purchase_price}</td>
-            <td>₹${purchaseNav}</td>
-            <td>₹${liveNav}</td>
-            <td style="color: ${gainLoss >= 0 ? 'green' : 'red'};">₹${gainLoss}</td>
-          </tr>
-        `;
-
-        tbody.innerHTML += row;
-      }
-    } catch (error) {
-      console.error('Error fetching mutual fund investments:', error);
-    }
-  }
-
-  function getFundCode(fundName) {
-    const map = {
-      "SBI Bluechip Fund": "120503",
-      "HDFC Small Cap Fund": "118550",
-      "ICICI Prudential Value Discovery Fund": "119822"
-    };
-    return map[fundName] || null;
-  }
-
-  // Trigger on page load
-  window.onload = fetchMutualFundInvestments;
-</script>
 </body>
 </html>

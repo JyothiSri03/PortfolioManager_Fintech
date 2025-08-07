@@ -1,225 +1,279 @@
-/* General styling */
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-  }
-  
-  body {
-    background-color: #f0f4f8;
-  }
-  
-  /* Sidebar styling */
-  #sidebar {
-    width: 350px;
-    height: 100vh;
-    position: fixed;
-    background-color: #0077b6;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 50px;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-  }
-  
-  .but {
-    width: 80%;
-    height: 45px;
-    margin: 10px 0;
-    background-color: #ffb6b9;
-    border: none;
-    border-radius: 8px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
-  }
-  
-  .but:hover {
-    background-color: #ff8fa3;
-    transform: scale(1.05);
-  }
-  
-  .but a {
-    text-decoration: none;
-    color: #333;
-    display: block;
-    height: 100%;
-    width: 100%;
-    line-height: 45px;
-    text-align: center;
-  }
-  
-  /* Dropdown menu */
-  .dropdown {
-    width: 80%;
-    position: relative;
-  }
-  
-  .dropbtn {
-    background-color: #ffb6b9;
-    border: none;
-    border-radius: 8px;
-    font-size: 18px;
-    width: 100%;
-    height: 45px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .dropbtn:hover {
-    background-color: #ff8fa3;
-  }
-  
-  .dropdown-content {
-    display: none;
-    position: absolute;
-    top: 50px;
-    width: 100%;
-    background-color: #ffcad4;
-    border-radius: 8px;
-    z-index: 1;
-    flex-direction: column;
-  }
-  
-  .dropdown-content a {
-    padding: 12px 16px;
-    text-decoration: none;
-    color: #333;
-    display: block;
-    border-bottom: 1px solid #fff;
-  }
-  
-  .dropdown-content a:hover {
-    background-color: #ffe2e9;
-  }
-  
-  /* Show dropdown on hover */
-  .dropdown:hover .dropdown-content {
-    display: flex;
-  }
-  
-  /* Main content */
-  .main-content {
-    margin-left: 250px;
-    padding: 40px;
-  }
-  
-  h1 {
-    color: #0077b6;
-    font-size: 32px;
-    text-align: center;
-  }
-  
-  /* Investment box styling */
-  .container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 30px;
-  }
-  
-  .box {
-    width: 200px;
-    height: 150px;
-    background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    color: #333;
-    transition: transform 0.2s, background-color 0.3s;
-    cursor: pointer;
-  }
-  
-  .box:hover {
-    background-color: #caf0f8;
-    transform: translateY(-5px);
-  }
-  
-  .nav-btn {
-    width: 80%;
-    height: 45px;
-    background-color: #ffb6b9;
-    border: none;
-    border-radius: 8px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
-  }
-  
-  .nav-btn a {
-    text-decoration: none;
-    color: #333;
-    display: block;
-    width: 100%;
-    height: 100%;
-    line-height: 45px;
-    text-align: center;
-  }
-  
-  .nav-btn:hover {
-    background-color: #ff8fa3;
-    transform: scale(1.05);
-  }
-  
-
-/* Common layout for all pages */
-body {
-  font-family: Arial, sans-serif;
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: Arial, sans-serif;
 }
 
-/* Sidebar iframe spacing */
-.main-content {
-  margin-left: 250px;
+body {
+  background-color: #EFEBE9;
+  color: #3E2723;
+}
+
+/*Homepage Styling*/
+.welcome-section {
+  margin-top : 8%;
+  background-color: rgba(255, 255, 255, 0.8);
   padding: 40px;
+  border-radius: 12px;
 }
 
-/* Investment Boxes */
-.box {
-  width: 200px;
-  height: 120px;
-  background-color: #caf0f8;
+.welcome-section h1 {
+  font-size: 2.5rem;
+  color: #4e342e;
+  margin-bottom: 20px;
+}
+
+.welcome-section p {
+  font-size: 1.2rem;
+  color: #5d4037;
+  max-width: 800px;
+  margin: 0 auto;
+} 
+
+.cta-buttons {
   display: flex;
   justify-content: center;
-  align-items: center;
-  font-size: 20px;
-  border-radius: 12px;
-  text-decoration: none;
-  color: #03045e;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
+  gap: 20px;
+  margin-top: 30px;
 }
 
-.box:hover {
+.cta-buttons a {
+  background-color: #8d6e63; /* Warm brown */
+  color: white;
+  padding: 12px 24px;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.cta-buttons a:hover {
+  background-color: #5d4037; /* Darker brown on hover */
+}  
+/* Main content styling with background image */
+#main-content {
+  margin-left: 350px;
+  padding: 60px;
+  min-height: 100vh;
+  background: url('https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?ixlib=rb-4.0&auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+  background-size: cover;
+}
+/* Sidebar styling */
+#sidebar {
+  width: 350px;
+  height: 100vh;
+  position: fixed;
+  background-color: #4E342E;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 50px;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  font-size: 26px;
+  font-weight: bold;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: white;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 4px #000;
+  border-bottom: 2px solid white;
+  padding-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.but {
+  width: 80%;
+  height: 45px;
+  margin: 10px 0;
+  background-color: #A1887F;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.but:hover {
+  background-color: #8D6E63;
   transform: scale(1.05);
 }
 
-.invest-grid {
+.but a {
+  text-decoration: none;
+  color: #FBE9E7;
+  display: block;
+  height: 100%;
+  width: 100%;
+  line-height: 45px;
+  text-align: center;
+}
+
+/* Dropdown menu */
+.dropdown {
+  width: 80%;
+  position: relative;
+}
+
+.dropbtn {
+  background-color: #A1887F;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  width: 100%;
+  height: 45px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  color: #fff;
+}
+
+.dropbtn:hover {
+  background-color: #8D6E63;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 70px;
+  width: 100%;
+  background-color: #D7CCC8;
+  border-radius: 8px;
+  z-index: 1;
+  flex-direction: column;
+}
+
+.dropdown-content a {
+  padding: 12px 16px;
+  text-decoration: none;
+  color: #3E2723;
+  display: block;
+  border-bottom: 1px solid #fff;
+}
+
+.dropdown-content a:hover {
+  background-color: #BCAAA4;
+}
+
+/* Show dropdown on hover */
+.dropdown:hover .dropdown-content {
+  display: flex;
+}
+
+/* Main content */
+.main-content {
+  margin-left: 380px;
+  padding: 40px;
+  background-color: #EFEBE9;
+}
+
+h1, h2 {
+  color: #4E342E;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Investment box styling */
+.container {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  justify-content: center;
+  gap: 30px;
 }
 
-/* Gold Form */
-h2 {
-  color: #0077b6;
+.box {
+  width: 400px;
+  height: 250px;
+  background-color: #D7CCC8;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #3E2723;
+  transition: transform 0.2s, background-color 0.3s;
+  cursor: pointer;
+  background-size: cover;
+  background-position: center;
 }
 
+
+.box:hover {
+  background-color: #BCAAA4;
+  
+  transform: scale(1.05);
+}
+
+/* Table Styling */
+table {
+  width: 90%;
+  border-collapse: collapse;
+  margin: 30px;
+}
+
+th, td {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #BDBDBD;
+}
+
+th {
+  background-color: #A1887F;
+  color: #fff;
+}
+
+/* Navigation button */
+.nav-btn {
+  width: 80%;
+  height: 45px;
+  background-color: #A1887F;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.nav-btn a {
+  text-decoration: none;
+  color: #FBE9E7;
+  display: block;
+  width: 100%;
+  height: 100%;
+  line-height: 45px;
+  text-align: center;
+}
+
+.nav-btn:hover {
+  background-color: #8D6E63;
+  transform: scale(1.05);
+}
+
+/* Investment form */
 form {
   max-width: 400px;
-  background-color: #f1f1f1;
+  background-color: #FFF8E1;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-label {
+form input, form select, form button {
   display: block;
+  margin-bottom: 15px;
+  padding: 8px;
+  width: 300px;
+}
+
+label {
   margin-top: 15px;
 }
 
@@ -239,7 +293,7 @@ button {
   margin-top: 20px;
   width: 100%;
   padding: 10px;
-  background-color: #00b4d8;
+  background-color: #6D4C41;
   border: none;
   color: white;
   font-size: 16px;
@@ -248,10 +302,61 @@ button {
 }
 
 button:hover {
-  background-color: #0077b6;
+  background-color: #4E342E;
 }
 
-.main-content {
-  margin-left: 250px;
-  padding: 40px;
+/* Graph chart styling */
+.charts-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.chart-wrapper {
+  text-align: center;
+  width: 300px;
+}
+
+canvas #investmentChart {
+  width: 500px !important;
+  height: 500px !important;
+}
+
+
+#sidebar a,
+.dropdown-content a {
+  text-decoration: none;
+}
+
+.box a {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+  text-shadow: 2px 2px 6px #000;
+}
+
+#graph-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: auto;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: nowrap;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.buttons button {
+  flex: 0 0 150px; /* All buttons will be 150px wide */
+  height: 40px;
+  font-size: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
 }

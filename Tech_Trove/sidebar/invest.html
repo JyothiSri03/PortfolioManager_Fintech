@@ -4,11 +4,28 @@
   <meta charset="UTF-8">
   <title>Tech Trove - Invest</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .box:nth-child(1) {
+      background-image: url('gold.jpg'); /* Gold */
+    }
+
+    .box:nth-child(2) {
+      background-image: url('stocks.jpg'); /* Stocks */
+    }
+
+    .box:nth-child(3) {
+      background-image: url('funds.jpg'); /* Mutual Funds */
+    }
+
+    .box:nth-child(4) {
+      background-image: url('property.jpg'); /* Property - https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80 */
+    }
+  </style>
 </head>
 <body>
-
   <!-- Sidebar -->
   <div id="sidebar">
+    <h2 class="logo">TECH TROVE</h2>
     <button class="but"><a href="home.html">Home</a></button>
     <button class="but"><a href="invest.html">Invest</a></button>
 
@@ -25,13 +42,11 @@
   <div class="main-content">
     <h1>Investment Options</h1>
     <div class="container">
-      <!-- <div class="box"><a href="../invest/gold.html">Gold</a></div> -->
-       <div class="box"><a href="gold.html">Gold</a></div>
+      <div class="box"><a href="gold.html">Gold</a></div>
       <div class="box"><a href="stocks.html">Stocks</a></div>
       <div class="box"><a href="mutualfunds.html">Mutual Funds</a></div>
       <div class="box"><a href="property.html">Property</a></div>
     </div>
   </div>
-
 </body>
 </html>

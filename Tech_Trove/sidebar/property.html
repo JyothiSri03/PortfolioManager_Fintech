@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Tech Trove - Property Investment</title>
   <link rel="stylesheet" href="style.css">
-  <style>
+  <!-- <style>
     .main-content {
       margin-left: 380px;
       padding: 40px;
@@ -21,78 +21,8 @@
     }
     th {
       background-color: #f0f0f0;
-    }
-  </style>
-</head>
-<body>
-  <!-- Sidebar -->
-  <div id="sidebar">
-    <button class="but"><a href="home.html">Home</a></button>
-    <button class="but"><a href="invest.html">Invest</a></button>
-    <div class="dropdown">
-      <button class="dropbtn">Statistics</button>
-      <div class="dropdown-content">
-        <a href="piechart.html">Pie Chart</a>
-        <a href="graph.html">Graph</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main content -->
-  <div class="main-content">
-    <h2>Add Property Investment</h2>
-    <form id="propertyForm">
-      <label for="type">Type</label>
-      <input type="text" id="type" name="type" value="Property" readonly>
-
-      <label for="city">Select City</label>
-      <select id="city" name="city" required>
-        <option>--select--</option>
-        <option value="Mumbai">Mumbai</option>
-        <option value="Bangalore">Bangalore</option>
-        <option value="Hyderabad">Hyderabad</option>
-        <option value="Delhi">Delhi</option>
-        <option value="Chennai">Chennai</option>
-        <option value="Pune">Pune</option>
-        <option value="Kolkata">Kolkata</option>
-        <option value="Ahmedabad">Ahmedabad</option>
-        <option value="Jaipur">Jaipur</option>
-        <option value="Lucknow">Lucknow</option>
-        <option value="Surat">Surat</option>
-        <option value="Indore">Indore</option>
-        <option value="Noida">Noida</option>
-        <option value="Gurgaon">Gurgaon</option>
-        <option value="Nagpur">Nagpur</option>
-        <option value="Vizag">Vizag</option>
-      </select>
-      
-      <label for="area">Area (in sq. ft.)</label>
-      <input type="number" id="area" name="quantity" required>
-
-      <label for="purchase">Purchase Price (auto-calculated)</label>
-      <input type="number" id="purchase" name="purchase_price" readonly>
-
-      <label for="current">Current Price per Sq. Ft (₹)</label>
-      <input type="number" id="current" name="current_price" readonly>
-
-      <button type="submit">Submit</button>
-    </form>
-
-    <h2>Past Property Investments</h2>
-    <table id="propertyTable">
-      <thead>
-        <tr>
-          <th>City</th>
-          <th>Area (sq. ft)</th>
-          <th>Purchase Price (₹)</th>
-          <th>Current Price/sq.ft (₹)</th>
-          <th>Gain/Loss (₹)</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
+    } 
+  </style>-->
   <script>
     const pricePerSqFtByCity = {
       "Mumbai": 15000,
@@ -185,30 +115,180 @@
         try {
           const res = await fetch("http://localhost:5000/api/investments/get-property");
           const investments = await res.json();
-
+      
           const tbody = document.querySelector("#propertyTable tbody");
           tbody.innerHTML = "";
-
+      
           investments.forEach(inv => {
-            const gainLoss = ((inv.current_price - (inv.purchase_price / inv.quantity)) * inv.quantity).toFixed(2);
-            const row = `
-              <tr>
-                <td>${inv.city}</td>
-                <td>${inv.quantity}</td>
-                <td>₹${inv.purchase_price}</td>
-                <td>₹${inv.current_price}</td>
-                <td style="color:${gainLoss >= 0 ? 'green' : 'red'};">₹${gainLoss}</td>
-              </tr>
-            `;
-            tbody.innerHTML += row;
+            const fluctuationPercent = (Math.random() * 10 - 5); // ±5%
+            const fluctuatedPrice = (inv.current_price * (1 + fluctuationPercent / 100)).toFixed(2);
+      
+            const gainLoss = ((fluctuatedPrice - (inv.purchase_price / inv.quantity)) * inv.quantity).toFixed(2);
+
+      
+            const row = document.createElement("tr");
+row.innerHTML = `
+  <td>${inv.city}</td>
+  <td>${inv.quantity}</td>
+  <td>₹${inv.purchase_price}</td>
+  <td>₹${fluctuatedPrice}</td>
+  <td style="color:${gainLoss >= 0 ? 'green' : 'red'};">₹${gainLoss}</td>
+  <td>
+    <button class="sell-btn" ${inv.status === "sold" ? "disabled" : ""}>Sell</button>
+    <button class="withdraw-btn" ${inv.status === "sold" ? "disabled" : ""} style=display:none>Withdraw</button>
+  </td>
+`;
+
+      
+            const sellBtn = row.querySelector(".sell-btn");
+            const withdrawBtn = row.querySelector(".withdraw-btn");
+      
+            // SELL logic
+           // SELL logic
+sellBtn.addEventListener("click", async (e) => {
+  if (gainLoss < 0) {
+    const proceed = confirm(`This investment is in LOSS of ₹${Math.abs(gainLoss)}.\nAre you sure you want to SELL?`);
+    if (!proceed) return;
+  }
+
+  const confirmSell = confirm(`Confirm to sell this property?\nGain/Loss: ₹${gainLoss}`);
+  if (!confirmSell) return;
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/investments/property/sell/${inv.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" }
+    });
+    if (res.ok) {
+      alert("Property sold successfully.");
+
+      // Change Sell button to "Sold" and disable it
+      e.target.textContent = "Sold";
+      e.target.disabled = true;
+      e.target.style.backgroundColor = "green";
+      e.target.style.color = "white";
+
+      // Disable Withdraw button
+      withdrawBtn.disabled = true;
+      withdrawBtn.style.backgroundColor = "grey";
+      withdrawBtn.style.color = "white";
+      withdrawBtn.style.cursor = "not-allowed";
+
+    } else {
+      alert("Failed to sell property.");
+    }
+  } catch (err) {
+    console.error("Error selling:", err);
+    alert("Error while selling the property.");
+  }
+});
+
+      
+            // WITHDRAW logic
+            withdrawBtn.addEventListener("click", async () => {
+              const confirmWithdraw = confirm("Are you sure you want to withdraw this investment? This action cannot be undone.");
+              if (!confirmWithdraw) return;
+      
+              try {
+                const res = await fetch(`http://localhost:5000/api/investments/property/withdraw/${inv.id}`, {
+                  method: "DELETE"
+                });
+                if (res.ok) {
+                  alert("Property withdrawn successfully.");
+                  fetchPropertyInvestments();
+                } else {
+                  alert("Failed to withdraw property.");
+                }
+              } catch (err) {
+                console.error("Error withdrawing:", err);
+                alert("Error while withdrawing property.");
+              }
+            });
+      
+            tbody.appendChild(row);
           });
         } catch (err) {
           console.error("Failed to fetch property data:", err);
         }
       }
+      
 
       fetchPropertyInvestments();
     });
   </script>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <h2 class="logo">TECH TROVE</h2>
+    <button class="but"><a href="home.html">Home</a></button>
+    <button class="but"><a href="invest.html">Invest</a></button>
+    <div class="dropdown">
+      <button class="dropbtn">Statistics</button>
+      <div class="dropdown-content">
+        <a href="piechart.html">Pie Chart</a>
+        <a href="graph.html">Graph</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <h2>Add Property Investment</h2>
+    <div class="container">
+    <form id="propertyForm">
+      <label for="type">Type</label>
+      <input type="text" id="type" name="type" value="Property" readonly>
+
+      <label for="city">Select City</label>
+      <select id="city" name="city" required>
+        <option>--select--</option>
+        <option value="Mumbai">Mumbai</option>
+        <option value="Bangalore">Bangalore</option>
+        <option value="Hyderabad">Hyderabad</option>
+        <option value="Delhi">Delhi</option>
+        <option value="Chennai">Chennai</option>
+        <option value="Pune">Pune</option>
+        <option value="Kolkata">Kolkata</option>
+        <option value="Ahmedabad">Ahmedabad</option>
+        <option value="Jaipur">Jaipur</option>
+        <option value="Lucknow">Lucknow</option>
+        <option value="Surat">Surat</option>
+        <option value="Indore">Indore</option>
+        <option value="Noida">Noida</option>
+        <option value="Gurgaon">Gurgaon</option>
+        <option value="Nagpur">Nagpur</option>
+        <option value="Vizag">Vizag</option>
+      </select>
+      
+      <label for="area">Area (in sq. ft.)</label>
+      <input type="number" id="area" name="quantity" required>
+
+      <label for="purchase">Purchase Price (auto-calculated)</label>
+      <input type="number" id="purchase" name="purchase_price" readonly>
+
+      <label for="current">Current Price per Sq. Ft (₹)</label>
+      <input type="number" id="current" name="current_price" readonly>
+
+      <button type="submit">Submit</button>
+    </form>
+    </div><br><br><br><br>
+    <h2>📈 Past Property Investments</h2>
+    <table id="propertyTable">
+      <thead>
+        <tr>
+          <th>City</th>
+          <th>Area (sq. ft)</th>
+          <th>Purchase Price (₹)</th>
+          <th>Current Price/sq.ft (₹)</th>
+          <th>Gain/Loss (₹)</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+ 
 </body>
 </html>

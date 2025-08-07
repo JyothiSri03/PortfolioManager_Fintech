@@ -2,16 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Tech Trove - Graph</title>
+  <title>Investment Gain/Loss Graph</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<script>
+  let chart;
 
+  async function fetchData(type) {
+    const endpoints = {
+      gold: 'http://localhost:5000/api/investments/get-gold',
+      stocks: 'http://localhost:5000/api/investments/get-stocks',
+      mutualfunds: 'http://localhost:5000/api/investments/get-mutualfunds',
+      property: 'http://localhost:5000/api/investments/get-property',
+    };
+
+    function calculateGainLoss(item) {
+      const purchase = parseFloat(item.purchase_price);
+      const current = parseFloat(item.current_price);
+      if (isNaN(purchase) || isNaN(current)) return 0;
+      return current - purchase;
+    }
+
+    if (type === 'all') {
+      const [gold, stocks, mutualfunds, property] = await Promise.all([
+        fetch(endpoints.gold).then(res => res.json()),
+        fetch(endpoints.stocks).then(res => res.json()),
+        fetch(endpoints.mutualfunds).then(res => res.json()),
+        fetch(endpoints.property).then(res => res.json())
+      ]);
+
+      return [
+        ...gold.map(item => ({ label: 'Gold', gainLoss: calculateGainLoss(item) })),
+        ...stocks.map(item => ({ label: 'Stocks', gainLoss: calculateGainLoss(item) })),
+        ...mutualfunds.map(item => ({ label: 'Mutual Funds', gainLoss: calculateGainLoss(item) })),
+        ...property.map(item => ({ label: 'Property', gainLoss: calculateGainLoss(item) }))
+      ];
+    } else {
+      const data = await fetch(endpoints[type]).then(res => res.json());
+      return data.map(item => ({
+        label: type.charAt(0).toUpperCase() + type.slice(1),
+        gainLoss: calculateGainLoss(item)
+      }));
+    }
+  }
+
+  function drawChart(data) {
+    const labels = data.map((_, index) => `Investment ${index + 1}`);
+    const gains = data.map(item => item.gainLoss);
+
+    if (chart) {
+      chart.destroy();
+    }
+
+    const ctx = document.getElementById('investmentChart').getContext('2d');
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Gain/Loss',
+          data: gains,
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3,
+          borderColor: '#007bff',
+          pointBackgroundColor: '#007bff',
+          pointBorderColor: '#007bff'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Investment Gain/Loss Over Time'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            title: {
+              display: true,
+              text: 'Gain/Loss (₹)'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Investment Index'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  async function loadGraph(type) {
+    const data = await fetchData(type);
+    drawChart(data);
+  }
+
+  // Load all data by default
+  loadGraph('all');
+</script>
+
+<body>
   <!-- Sidebar -->
   <div id="sidebar">
+    <h2 class="logo">TECH TROVE</h2>
     <button class="but"><a href="home.html">Home</a></button>
     <button class="but"><a href="invest.html">Invest</a></button>
-
     <div class="dropdown">
       <button class="dropbtn">Statistics</button>
       <div class="dropdown-content">
@@ -20,11 +121,19 @@
       </div>
     </div>
   </div>
-
-  <!-- Main content -->
   <div class="main-content">
-    <h1>This is Graph Page</h1>
+  <div class="container">
+  <div class="buttons">
+    
+    <button onclick="loadGraph('gold')">Gold</button>
+    <button onclick="loadGraph('stocks')">Stocks</button>
+    <button onclick="loadGraph('mutualfunds')">Mutual Funds</button>
+    <button onclick="loadGraph('property')">Property</button>
   </div>
-
+  <div id="graph-container" class="container">
+    <canvas id="investmentChart"></canvas>
+  </div>
+</div>
+</div>
 </body>
 </html>

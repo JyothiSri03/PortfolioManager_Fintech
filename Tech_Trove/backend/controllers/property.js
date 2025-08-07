@@ -27,4 +27,38 @@ router.get('/get-property', (req, res) => {
   });
 });
 
+
+router.put('/property/sell/:id', (req, res) => {
+  const id = req.params.id;
+
+  const sql = `UPDATE property_investments SET sold = TRUE WHERE id = ?`;
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('Error updating investment:', err);
+      return res.status(500).json({ message: 'Failed to mark as sold' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Investment not found' });
+    }
+
+    res.status(200).json({ message: 'Mutual fund marked as sold' });
+  });
+});
+
+router.delete('/property/withdraw/:id', (req, res) => {
+  const { id } = req.params;
+
+  const sql = `DELETE FROM property_investments WHERE id = ?`;
+
+  db.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('Error deleting investment:', err);
+      return res.status(500).json({ message: 'Server error' });
+    }
+
+    res.status(200).json({ message: 'Investment withdrawn (deleted) successfully' });
+  });
+});
 module.exports = router;

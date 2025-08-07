@@ -4,14 +4,134 @@
   <meta charset="UTF-8">
   <title>Tech Trove - Pie Chart</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    async function fetchData(url) {
+      const response = await fetch(url);
+      return await response.json();
+    }
+
+    function generateColors(count) {
+      return Array.from({ length: count }, () =>
+        `hsl(${Math.random() * 360}, 70%, 60%)`
+      );
+    }
+
+    async function renderMutualFundChart() {
+      const data = await fetchData('http://localhost:5000/api/investments/get-mutualfunds');
+      const fundTotals = {};
+      data.forEach(entry => {
+        if (fundTotals[entry.fund_name]) {
+          fundTotals[entry.fund_name] += parseFloat(entry.purchase_price);
+        } else {
+          fundTotals[entry.fund_name] = parseFloat(entry.purchase_price);
+        }
+      });
+      const labels = Object.keys(fundTotals);
+      const values = Object.values(fundTotals);
+      const colors = generateColors(labels.length);
+
+      new Chart(document.getElementById('mfPieChart'), {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Mutual Funds',
+            data: values,
+            backgroundColor: colors
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    async function renderStocksChart() {
+      const data = await fetchData('http://localhost:5000/api/investments/get-stocks');
+      const stockTotals = {};
+      data.forEach(entry => {
+        if (stockTotals[entry.company]) {
+          stockTotals[entry.company] += parseFloat(entry.purchase_price);
+        } else {
+          stockTotals[entry.company] = parseFloat(entry.purchase_price);
+        }
+      });
+      const labels = Object.keys(stockTotals);
+      const values = Object.values(stockTotals);
+      const colors = generateColors(labels.length);
+
+      new Chart(document.getElementById('stocksPieChart'), {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Stock Investments',
+            data: values,
+            backgroundColor: colors
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    async function renderPropertyChart() {
+      const data = await fetchData('http://localhost:5000/api/investments/get-property');
+      const propertyTotals = {};
+      data.forEach(entry => {
+        if (propertyTotals[entry.city]) {
+          propertyTotals[entry.city] += parseFloat(entry.purchase_price);
+        } else {
+          propertyTotals[entry.city] = parseFloat(entry.purchase_price);
+        }
+      });
+      const labels = Object.keys(propertyTotals);
+      const values = Object.values(propertyTotals);
+      const colors = generateColors(labels.length);
+
+      new Chart(document.getElementById('propertyPieChart'), {
+        type: 'pie',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Property Investments',
+            data: values,
+            backgroundColor: colors
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    window.onload = () => {
+      renderMutualFundChart();
+      renderStocksChart();
+      renderPropertyChart();
+    };
+  </script>
 </head>
 <body>
-
   <!-- Sidebar -->
   <div id="sidebar">
+    <h2 class="logo">TECH TROVE</h2>
     <button class="but"><a href="home.html">Home</a></button>
     <button class="but"><a href="invest.html">Invest</a></button>
-
     <div class="dropdown">
       <button class="dropbtn">Statistics</button>
       <div class="dropdown-content">
@@ -20,11 +140,25 @@
       </div>
     </div>
   </div>
-
   <!-- Main content -->
   <div class="main-content">
-    <h1>This is Pie Chart Page</h1>
-  </div>
-
+    <h1>📊 Investment Distribution</h1>
+    <div class="container">
+    <div class="charts-container">
+      <div class="chart-wrapper">
+        <h2>Stocks</h2>
+        <canvas id="stocksPieChart"></canvas>
+      </div>
+      <div class="chart-wrapper">
+        <h2>Mutual Funds</h2>
+        <canvas id="mfPieChart"></canvas>
+      </div>
+      <div class="chart-wrapper">
+        <h2>Properties</h2>
+        <canvas id="propertyPieChart"></canvas>
+      </div>
+    </div>
+    </div>
+  </div>  
 </body>
 </html>
