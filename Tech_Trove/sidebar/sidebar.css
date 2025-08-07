@@ -1,0 +1,50 @@
+#sidebar {
+    width: 350px;
+    height: 100vh;
+    position: fixed;
+    background-color: #0077b6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 50px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-btn {
+    width: 80%;
+    height: 45px;
+    background-color: #ffb6b9;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+  }
+
+  .nav-btn a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    width: 100%;
+    height: 100%;
+    line-height: 45px;
+    text-align: center;
+  }
+  
+  .dropbtn {
+    background-color: #ffb6b9;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    width: 100%;
+    height: 45px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .dropdown {
+    width: 80%;
+    position: relative;
+  }
+
+

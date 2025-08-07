@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tech Trove - Home</title>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    let currentPricePerGram = 0;
+  
+    document.addEventListener("DOMContentLoaded", () => {
+      // Fetch Gold Price
+      fetch("https://www.goldapi.io/api/XAU/INR", {
+        method: "GET",
+        headers: {
+          "x-access-token": "goldapi-3e0c119me097juu-io",  // Replace with your valid API key
+          "Content-Type": "application/json"
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.price) {
+          currentPricePerGram = (data.price / 31.1035).toFixed(2); // Convert oz to gram
+          document.getElementById("current").value = currentPricePerGram;
+          updatePurchasePrice(); // Calculate if quantity is pre-filled
+        } else {
+          document.getElementById("current").value = "Unavailable";
+        }
+      })
+      .catch(err => {
+        console.error("API Error:", err);
+        document.getElementById("current").value = "Error fetching";
+      });
+  
+      // Handle quantity input to calculate purchase price
+      document.getElementById("quantity").addEventListener("input", updatePurchasePrice);
+  
+      function updatePurchasePrice() {
+        const quantity = parseFloat(document.getElementById("quantity").value);
+        if (!isNaN(quantity) && currentPricePerGram) {
+          const purchase = (quantity * currentPricePerGram).toFixed(2);
+          document.getElementById("purchase").value = purchase;
+        } else {
+          document.getElementById("purchase").value = "";
+        }
+      }
+  
+      // Form Submission
+      const form = document.querySelector("form");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+  
+        const quantity = parseFloat(document.getElementById("quantity").value);
+        const purchase_price = parseFloat(document.getElementById("purchase").value);
+        const current_price = parseFloat(document.getElementById("current").value);
+  
+        const investment = {
+          quantity,
+          purchase_price,
+          current_price
+        };
+  
+        try {
+          const res = await fetch("http://localhost:5000/api/investments/gold", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(investment)
+          });
+  
+          const data = await res.json();
+          if (res.ok) {
+            alert("Gold investment added successfully!");
+            form.reset();
+            document.getElementById("current").value = currentPricePerGram;
+          } else {
+            alert("Error: " + data.message);
+          }
+        } catch (error) {
+          console.error("Submission error:", error);
+          alert("Failed to send data to the server.");
+        }
+      });
+    });
+  </script>
+  
+  <style>
+    .main-content {
+      margin-left: 650px;
+      padding: 40px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <button class="but"><a href="home.html">Home</a></button>
+    <button class="but"><a href="invest.html">Invest</a></button>
+
+    <!-- Dropdown for Statistics -->
+    <div class="dropdown">
+      <button class="dropbtn">Statistics</button>
+      <div class="dropdown-content">
+        <a href="piechart.html">Pie Chart</a>
+        <a href="graph.html">Graph</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <h2>Add Gold Investment</h2>
+    <form>
+        <label for="type">Type</label>
+        <input type="text" id="type" name="type" value="Gold" readonly>
+      
+        <label for="quantity">Quantity (in grams)</label>
+        <input type="number" id="quantity" name="quantity" required>
+      
+        <label for="purchase">Purchase Price (auto-calculated)</label>
+        <input type="number" id="purchase" name="purchase_price" readonly>
+      
+        <label for="current">Current Price (in rupees)</label>
+        <input type="number" id="current" name="current_price" readonly>
+      
+        <button type="submit">Submit</button>
+      </form>
+      
+  </div>
+</body>
+</html>

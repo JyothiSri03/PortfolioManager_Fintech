@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tech Trove - Property Investment</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .main-content {
+      margin-left: 650px;
+      padding: 40px;
+    }
+  </style>
+  <script>
+    let currentPricePerSqFt = 6500; // Simulated daily property price
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("current").value = currentPricePerSqFt;
+      updatePurchasePrice();
+
+      document.getElementById("area").addEventListener("input", updatePurchasePrice);
+
+      function updatePurchasePrice() {
+        const area = parseFloat(document.getElementById("area").value);
+        if (!isNaN(area)) {
+          const purchase = (area * currentPricePerSqFt).toFixed(2);
+          document.getElementById("purchase").value = purchase;
+        } else {
+          document.getElementById("purchase").value = "";
+        }
+      }
+
+      document.querySelector("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const quantity = parseFloat(document.getElementById("area").value); // area
+        const purchase_price = parseFloat(document.getElementById("purchase").value);
+        const current_price = parseFloat(document.getElementById("current").value);
+
+        const investment = {
+          quantity,
+          purchase_price,
+          current_price
+        };
+
+        try {
+          const res = await fetch("http://localhost:5000/api/investments/property", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(investment)
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            alert("Property investment added successfully!");
+            e.target.reset();
+            document.getElementById("current").value = currentPricePerSqFt;
+          } else {
+            alert("Error: " + data.message);
+          }
+        } catch (error) {
+          console.error("Submission error:", error);
+          alert("Failed to send data to the server.");
+        }
+      });
+    });
+  </script>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <button class="but"><a href="home.html">Home</a></button>
+    <button class="but"><a href="invest.html">Invest</a></button>
+    <div class="dropdown">
+      <button class="dropbtn">Statistics</button>
+      <div class="dropdown-content">
+        <a href="piechart.html">Pie Chart</a>
+        <a href="graph.html">Graph</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main-content">
+    <h2>Add Property Investment</h2>
+    <form>
+      <label for="type">Type</label>
+      <input type="text" id="type" name="type" value="Property" readonly>
+
+      <label for="area">Area (in sq. ft.)</label>
+      <input type="number" id="area" name="quantity" required>
+
+      <label for="purchase">Purchase Price (auto-calculated)</label>
+      <input type="number" id="purchase" name="purchase_price" readonly>
+
+      <label for="current">Current Price per Sq. Ft (₹)</label>
+      <input type="number" id="current" name="current_price" readonly>
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+</body>
+</html>

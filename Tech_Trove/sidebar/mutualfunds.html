@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tech Trove - Mutual Funds</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .main-content {
+      margin-left: 650px;
+      padding: 40px;
+    }
+  </style>
+  <script>
+    let nav = 0;
+  
+    document.addEventListener("DOMContentLoaded", () => {
+      const fundSelect = document.getElementById("fund");
+      const unitsInput = document.getElementById("units");
+      const navInput = document.getElementById("nav");
+      const investmentInput = document.getElementById("investment");
+      const typeInput = document.getElementById("type");
+      const form = document.querySelector("form");
+  
+      let selectedFundName = "";
+  
+      fundSelect.addEventListener("change", () => {
+        const fundCode = fundSelect.value;
+        selectedFundName = fundSelect.options[fundSelect.selectedIndex].text;
+  
+        fetch(`https://api.mfapi.in/mf/${fundCode}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.data && data.data.length > 0) {
+              nav = parseFloat(data.data[0].nav);
+              navInput.value = nav.toFixed(2);
+              updateInvestmentAmount();
+            } else {
+              nav = 0;
+              navInput.value = "Unavailable";
+            }
+          })
+          .catch(err => {
+            console.error("NAV fetch error:", err);
+            nav = 0;
+            navInput.value = "Error";
+          });
+      });
+  
+      unitsInput.addEventListener("input", updateInvestmentAmount);
+  
+      function updateInvestmentAmount() {
+        const units = parseFloat(unitsInput.value);
+        if (!isNaN(units) && nav) {
+          investmentInput.value = (units * nav).toFixed(2);
+        } else {
+          investmentInput.value = "";
+        }
+      }
+  
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+  
+        // Forcefully ensure the type value
+        typeInput.value = "Mutual Funds";
+  
+        const type = typeInput.value;
+        const fund_name = selectedFundName;
+        const quantity = parseFloat(unitsInput.value);
+        const purchase_price = parseFloat(investmentInput.value);
+        const current_price = parseFloat(navInput.value);
+  
+        if (!fund_name || isNaN(quantity) || isNaN(purchase_price) || isNaN(current_price)) {
+          alert("Please fill out all fields correctly.");
+          return;
+        }
+  
+        const investment = {
+          type,
+          fund_name,
+          quantity,
+          purchase_price,
+          current_price
+        };
+  
+        try {
+          const res = await fetch("http://localhost:5000/api/investments/mutualfunds", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(investment)
+          });
+  
+          const data = await res.json();
+          if (res.ok) {
+            alert("Mutual fund investment added successfully!");
+            form.reset();
+            navInput.value = "";
+            investmentInput.value = "";
+            selectedFundName = "";
+  
+            // Reset the type input again after form.reset()
+            typeInput.value = "Mutual Funds";
+          } else {
+            alert("Error: " + data.message);
+          }
+        } catch (error) {
+          console.error("Submit error:", error);
+          alert("Failed to submit data.");
+        }
+      });
+    });
+  </script>
+  
+  
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <button class="but"><a href="home.html">Home</a></button>
+    <button class="but"><a href="invest.html">Invest</a></button>
+
+    <div class="dropdown">
+      <button class="dropbtn">Statistics</button>
+      <div class="dropdown-content">
+        <a href="piechart.html">Pie Chart</a>
+        <a href="graph.html">Graph</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <h2>Add Mutual Fund Investment</h2>
+
+    <form>
+      <label for="fund">Select Mutual Fund</label>
+      <select id="fund" name="fund" required>
+        <option value="" disabled selected>Select a Mutual Fund</option>
+        <option value="120503">SBI Bluechip Fund</option>
+        <option value="118550">HDFC Small Cap Fund</option>
+        <option value="119822">ICICI Prudential Value Discovery Fund</option>
+      </select>
+
+      <label for="type">Type</label>
+      <input type="text" id="type" name="type" value="Mutual Funds" readonly>
+
+      <label for="units">Units</label>
+      <input type="number" id="units" name="quantity" step="any" required>
+
+      <label for="investment">Investment Amount (auto-calculated)</label>
+      <input type="number" id="investment" name="purchase_price" readonly>
+
+      <label for="nav">Current NAV (₹)</label>
+      <input type="text" id="nav" name="current_price" readonly>
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+</body>
+</html>
