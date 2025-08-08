@@ -360,3 +360,28 @@ canvas #investmentChart {
   white-space: nowrap;
   text-align: center;
 }
+
+.investment-wallet-container {
+  display: flex;
+  justify-content: space-between; /* Left one stays left, right one stays right */
+  align-items: center;
+  /* width: 60%; */
+  margin-left: 380px;
+}
+
+.IWBox {
+  width: 360px;
+  height: 100px;
+  background-color: #D7CCC8;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #3E2723;
+  transition: transform 0.2s, background-color 0.3s;
+  cursor: pointer;
+  margin:5px
+}
+

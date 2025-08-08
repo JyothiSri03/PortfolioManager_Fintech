@@ -9,7 +9,8 @@
       try {
         const response = await fetch('http://localhost:5000/api/investments/get-mutualfunds');
         const data = await response.json();
-  
+        let totalInvested = 0;
+        let walletAmount = 0;
         const tbody = document.querySelector('#mfTable tbody');
         tbody.innerHTML = '';
   
@@ -36,7 +37,10 @@
           const gainLoss = ((liveNav * investment.quantity) - investment.purchase_price).toFixed(2);
   
           const isSold = investment.sold === true || investment.sold === 1 || investment.sold === "1";
-  
+          if (isSold) {
+            walletAmount += investment.purchase_price+Number(gainLoss); // Money back in wallet
+          }
+          totalInvested += investment.purchase_price;
   
           const row = document.createElement('tr');
           row.setAttribute("data-id", investment.id);
@@ -54,7 +58,10 @@
           `;
           tbody.appendChild(row);
         }
-  
+        document.getElementById("total-invested").textContent = `Total Invested: ₹${totalInvested.toFixed(2)}`;
+        document.getElementById("wallet").textContent = `Wallet: ₹${walletAmount.toFixed(2)}`;
+        const currentHoldings=`${totalInvested.toFixed(2)-walletAmount.toFixed(2)}`
+        document.getElementById("current-holdings").textContent=`Current Holdings:₹${currentHoldings}`;
         // Add button functionality
         addSellWithdrawHandlers();
   
@@ -298,6 +305,17 @@
     </form>
   </div>
   </div>
+  <div class="main-container">
+  <div class="container">
+  <div class="investment-wallet-container">
+    <div id="total-invested" class="IWBox"></div>
+    <div id="current-holdings" class="IWBox"></div>
+    <div id="wallet" class="IWBox"></div>
+  </div>
+  </div>
+</div>
+</div>
+  
   <!-- Mutual Funds Table -->
 <div class="main-content">
   <h2>📊 Past Mutual Fund Investments</h2>

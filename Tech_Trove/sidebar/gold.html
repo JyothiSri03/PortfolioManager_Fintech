@@ -95,15 +95,22 @@
       .then(data => {
         const tableBody = document.querySelector("#investmentTable tbody");
         tableBody.innerHTML = "";
-
+  
+        let totalInvested = 0;
+        let walletAmount = 0;
+  
         data.forEach(investment => {
           const row = document.createElement("tr");
           row.setAttribute("data-id", investment.id);
-
+  
           const gainLoss = (investment.quantity * currentPricePerGram - investment.purchase_price).toFixed(2);
-
+  
           const isSold = investment.sold === true || investment.sold === 1 || investment.sold === "1";
-
+          if (isSold) {
+            walletAmount += investment.purchase_price; // Money back in wallet
+          }
+          totalInvested += investment.purchase_price; // Track total investment
+  
           row.innerHTML = `
             <td>${investment.quantity}</td>
             <td>${investment.purchase_price}</td>
@@ -112,16 +119,21 @@
             <td style="color: ${gainLoss >= 0 ? 'green' : 'red'};">${gainLoss}</td>
             <td>
               <button class="sell-btn" ${isSold ? "disabled style='background-color:green;color:white;'" : ""}>${isSold ? "Sold ✅" : "Sell"}</button>
-              <button class="withdraw-btn" ${isSold ? "disabled style='background-color:lightgray;color:#666;'" : "" }style=display:none>Withdraw</button>
+              <button class="withdraw-btn" ${isSold ? "disabled style='background-color:lightgray;color:#666;'" : "" } style="display:none">Withdraw</button>
             </td>
           `;
           tableBody.appendChild(row);
         });
-
+  
+        // ✅ Display calculated values in spans
+        document.getElementById("total-invested").textContent = `Total Invested: ₹${totalInvested.toFixed(2)}`;
+        document.getElementById("wallet").textContent = `Wallet: ₹${walletAmount.toFixed(2)}`;
+  
         attachGoldHandlers();
       })
       .catch(err => console.error("Fetch error:", err));
   }
+  
 
   function attachGoldHandlers() {
     document.querySelectorAll(".sell-btn").forEach(btn => {
@@ -226,6 +238,8 @@
       <button type="submit">Submit</button>
     </form>
     </div><br><br><br><br>
+    <span id="total-invested"></span>
+    <span id="wallet"></span>
     <h2>📊 Past Gold Investments</h2>
     <table id="investmentTable">
       <thead>
